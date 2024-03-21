@@ -23,10 +23,11 @@ def create_users_table():
     )
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS new_users (
+        CREATE TABLE IF NOT EXISTS book (
             id SERIAL PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(64) NOT NULL
+            password VARCHAR(64) NOT NULL,
+            email VARCHAR(100) UNIQUE NOT NULL
         )
     ''')
     conn.commit()
@@ -60,7 +61,8 @@ def register_page():
 def register():
     if request.method == 'POST':
         username = request.form['username']
-        password = hash_password(request.form['password'])  # Hash  password
+        password = hash_password(request.form['password'])
+        email = request.form['email']
         conn = psycopg2.connect(
             dbname=DB_NAME,
             user=DB_USER,
@@ -69,7 +71,7 @@ def register():
         )
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO new_users (username, password) VALUES (%s, %s)', (username, password))
+            cursor.execute('INSERT INTO book (username, password,email) VALUES (%s, %s, %s)', (username, password,email))
             conn.commit()
             return redirect('/loginpage')
         except psycopg2.IntegrityError:
@@ -96,7 +98,7 @@ def login():
             host=DB_HOST
         )
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM new_users WHERE username = %s', (username,))
+        cursor.execute('SELECT * FROM book WHERE username = %s', (username,))
         user = cursor.fetchone()
         conn.close()
         if user and user[2] == provided_password:  
@@ -108,11 +110,12 @@ def login():
     else:
         return redirect('/')
 
-
+@app.route("/contactpage")
+def contactpage():
+    return render_template('contact.html')
 
 @app.route('/profile')
 def profile():
-   
     return render_template('welcome.html')
     
     
